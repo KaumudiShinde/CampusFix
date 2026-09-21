@@ -1,0 +1,10 @@
+{
+  "name": "mit-wpu-infrastructure-system",
+  "version": "1.0.0",
+  "description": "MIT-WPU Campus Infrastructure & Space Vacancy OS",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build"
+  }
+}
