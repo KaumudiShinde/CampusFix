@@ -13,8 +13,11 @@ import {
   Zap, 
   Layers,
   Search,
-  UserCheck
+  UserCheck,
+  Download
 } from 'lucide-react';
+
+import { exportIssuesToCSV } from '../services/csvExport';
 
 const CATEGORY_ICONS = {
   projector_av: Tv,
@@ -72,18 +75,43 @@ export default function CampusIssuesTracker({
           </div>
         </div>
 
-        <button 
-          onClick={() => onOpenReportModal()} 
-          className="btn-primary"
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            alignItems: 'center'
+          }}
         >
-          <Plus size={16} />
-          <span>Report Facility Issue</span>
-        </button>
+          <button
+            onClick={() => exportIssuesToCSV(filteredIssues)}
+            className="btn-secondary"
+            disabled={filteredIssues.length === 0}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <Download size={16} />
+            <span>Export CSV</span>
+          </button>
+
+          <button 
+            onClick={() => onOpenReportModal()} 
+            className="btn-primary"
+          >
+            <Plus size={16} />
+            <span>Report Facility Issue</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary KPI Cards */}
       <div className="tracker-kpi-grid">
-        <div className={`tracker-kpi-card ${statusTab === 'open' ? 'active' : ''}`} onClick={() => setStatusTab('open')}>
+        <div 
+          className={`tracker-kpi-card ${statusTab === 'open' ? 'active' : ''}`} 
+          onClick={() => setStatusTab('open')}
+        >
           <div className="kpi-icon-box bg-red">
             <AlertTriangle size={20} />
           </div>
@@ -93,7 +121,10 @@ export default function CampusIssuesTracker({
           </div>
         </div>
 
-        <div className={`tracker-kpi-card ${statusTab === 'in_progress' ? 'active' : ''}`} onClick={() => setStatusTab('in_progress')}>
+        <div 
+          className={`tracker-kpi-card ${statusTab === 'in_progress' ? 'active' : ''}`} 
+          onClick={() => setStatusTab('in_progress')}
+        >
           <div className="kpi-icon-box bg-blue">
             <Clock size={20} />
           </div>
@@ -103,7 +134,10 @@ export default function CampusIssuesTracker({
           </div>
         </div>
 
-        <div className={`tracker-kpi-card ${statusTab === 'resolved' ? 'active' : ''}`} onClick={() => setStatusTab('resolved')}>
+        <div 
+          className={`tracker-kpi-card ${statusTab === 'resolved' ? 'active' : ''}`} 
+          onClick={() => setStatusTab('resolved')}
+        >
           <div className="kpi-icon-box bg-emerald">
             <CheckCircle2 size={20} />
           </div>
@@ -123,18 +157,21 @@ export default function CampusIssuesTracker({
           >
             All Tickets ({issues.length})
           </button>
+
           <button 
             className={`status-tab-btn ${statusTab === 'open' ? 'active' : ''}`}
             onClick={() => setStatusTab('open')}
           >
             Open ({openCount})
           </button>
+
           <button 
             className={`status-tab-btn ${statusTab === 'in_progress' ? 'active' : ''}`}
             onClick={() => setStatusTab('in_progress')}
           >
             In Progress ({inProgressCount})
           </button>
+
           <button 
             className={`status-tab-btn ${statusTab === 'resolved' ? 'active' : ''}`}
             onClick={() => setStatusTab('resolved')}
@@ -162,7 +199,9 @@ export default function CampusIssuesTracker({
           >
             <option value="all">All Blocks</option>
             {buildings.map(b => (
-              <option key={b.id} value={b.code}>{b.short_name || b.name}</option>
+              <option key={b.id} value={b.code}>
+                {b.short_name || b.name}
+              </option>
             ))}
           </select>
 
@@ -187,7 +226,10 @@ export default function CampusIssuesTracker({
             const CatIcon = CATEGORY_ICONS[issue.category] || Wrench;
 
             return (
-              <div key={issue.id} className={`issue-row-card priority-${issue.priority}`}>
+              <div 
+                key={issue.id} 
+                className={`issue-row-card priority-${issue.priority}`}
+              >
                 <div className="issue-row-icon">
                   <CatIcon size={20} />
                 </div>
@@ -195,28 +237,41 @@ export default function CampusIssuesTracker({
                 <div className="issue-row-main">
                   <div className="issue-row-header">
                     <span className="issue-code">{issue.ticket_id}</span>
-                    <span className="issue-room-badge">{issue.building_code} • {issue.room_number}</span>
+
+                    <span className="issue-room-badge">
+                      {issue.building_code} • {issue.room_number}
+                    </span>
+
                     <span className={`issue-priority-badge priority-${issue.priority}`}>
                       {issue.priority_display || issue.priority}
                     </span>
+
                     <span className={`issue-status-badge status-${issue.status}`}>
                       {issue.status_display || issue.status}
                     </span>
-                    <span className="issue-date">{new Date(issue.created_at).toLocaleString()}</span>
+
+                    <span className="issue-date">
+                      {new Date(issue.created_at).toLocaleString()}
+                    </span>
                   </div>
 
                   <h4 className="issue-row-title">{issue.title}</h4>
+
                   <p className="issue-row-desc">{issue.description}</p>
 
                   <div className="issue-row-footer">
                     <div className="reporter-info">
-                      <span>Reported by: <strong>{issue.reported_by_name}</strong></span>
+                      <span>
+                        Reported by: <strong>{issue.reported_by_name}</strong>
+                      </span>
                     </div>
 
                     {issue.assigned_technician && (
                       <div className="assigned-info">
                         <UserCheck size={14} />
-                        <span>Assigned to: <strong>{issue.assigned_technician}</strong></span>
+                        <span>
+                          Assigned to: <strong>{issue.assigned_technician}</strong>
+                        </span>
                       </div>
                     )}
 
@@ -251,7 +306,9 @@ export default function CampusIssuesTracker({
           <div className="empty-state-view">
             <CheckCircle2 size={42} className="text-emerald-400 mb-2" />
             <h3>No issues found matching your filter</h3>
-            <p>All facilities in the selected blocks are running in optimal condition.</p>
+            <p>
+              All facilities in the selected blocks are running in optimal condition.
+            </p>
           </div>
         )}
       </div>
