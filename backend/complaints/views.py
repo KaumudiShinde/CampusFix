@@ -171,6 +171,25 @@ class InfrastructureIssueDetailView(APIView):
         issue.save()
         return Response(InfrastructureIssueSerializer(issue).data)
 
+class OverdueIssuesView(APIView):
+        def get(self, request):
+            issues = InfrastructureIssue.objects.select_related(
+            'room',
+            'room__building'
+            ).filter(
+            status__in=['open', 'in_progress'],
+            sla_due_at__lt=timezone.now()
+            ).order_by('sla_due_at')
+
+            serializer = InfrastructureIssueSerializer(
+            issues,
+            many=True
+            )
+
+            return Response({
+            'count': issues.count(),
+            'overdue_issues': serializer.data
+})
 class CampusAnalyticsView(APIView):
     def get(self, request):
         total_rooms = Room.objects.count()

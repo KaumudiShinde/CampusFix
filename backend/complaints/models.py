@@ -2,6 +2,8 @@
 from django.db import models
 # pyrefly: ignore [missing-import]
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 import uuid
 
 class Department(models.Model):
@@ -175,9 +177,27 @@ class InfrastructureIssue(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(blank=True, null=True)
 
+    sla_due_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Expected deadline for resolving this issue"
+    )
+
     def save(self, *args, **kwargs):
         if not self.ticket_id:
             self.ticket_id = f"MIT-INF-{uuid.uuid4().hex[:6].upper()}"
+
+        if not self.sla_due_at and self.status not in ['resolved', 'closed']:
+            sla_hours = {
+                'critical': 4,
+                'high': 12,
+                'medium': 24,
+                'low': 48,
+            }
+
+            hours = sla_hours.get(self.priority, 24)
+            self.sla_due_at = timezone.now() + timedelta(hours=hours)
+
         super().save(*args, **kwargs)
 
     def __str__(self):
