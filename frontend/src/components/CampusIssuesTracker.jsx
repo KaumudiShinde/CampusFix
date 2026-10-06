@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useRef, useState } from 'react';
 import { 
   Wrench, 
   AlertTriangle, 
@@ -36,25 +36,34 @@ export default function CampusIssuesTracker({
   buildings, 
   onOpenReportModal, 
   onResolveIssue,
-  onAssignTechnician 
+  onAssignTechnician,
+  onSearchIssues
 }) {
   const [statusTab, setStatusTab] = useState('all'); // all, open, in_progress, resolved
   const [selectedBuilding, setSelectedBuilding] = useState('all');
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [search, setSearch] = useState('');
+  const searchTimeoutRef = useRef(null);
 
-  const filteredIssues = issues.filter(issue => {
-    if (statusTab !== 'all' && issue.status !== statusTab) return false;
-    if (selectedBuilding !== 'all' && issue.building_code !== selectedBuilding) return false;
-    if (selectedPriority !== 'all' && issue.priority !== selectedPriority) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const match = `${issue.ticket_id} ${issue.title} ${issue.description} ${issue.room_number} ${issue.building_name}`.toLowerCase();
-      if (!match.includes(q)) return false;
+  const filteredIssues = issues;
+    const applyFilters = (overrides = {}) => {
+    const filters = {
+    search: overrides.search ?? search,
+    status: overrides.status ?? statusTab,
+    building: overrides.building ?? selectedBuilding,
+    priority: overrides.priority ?? selectedPriority,
+    };
+
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([, value]) => value && value !== 'all'
+      )
+    );
+
+    if (onSearchIssues) {
+      onSearchIssues(cleanFilters);
     }
-    return true;
-  });
-
+  };
   const openCount = issues.filter(i => i.status === 'open').length;
   const inProgressCount = issues.filter(i => i.status === 'in_progress').length;
   const resolvedCount = issues.filter(i => i.status === 'resolved').length;
@@ -110,7 +119,10 @@ export default function CampusIssuesTracker({
       <div className="tracker-kpi-grid">
         <div 
           className={`tracker-kpi-card ${statusTab === 'open' ? 'active' : ''}`} 
-          onClick={() => setStatusTab('open')}
+          onClick={() => {
+            setStatusTab('open');
+            applyFilters({ status: 'open' });
+}}
         >
           <div className="kpi-icon-box bg-red">
             <AlertTriangle size={20} />
@@ -123,7 +135,10 @@ export default function CampusIssuesTracker({
 
         <div 
           className={`tracker-kpi-card ${statusTab === 'in_progress' ? 'active' : ''}`} 
-          onClick={() => setStatusTab('in_progress')}
+          onClick={() => {
+            setStatusTab('in_progress');
+            applyFilters({ status: 'in_progress' });
+          }}
         >
           <div className="kpi-icon-box bg-blue">
             <Clock size={20} />
@@ -136,7 +151,10 @@ export default function CampusIssuesTracker({
 
         <div 
           className={`tracker-kpi-card ${statusTab === 'resolved' ? 'active' : ''}`} 
-          onClick={() => setStatusTab('resolved')}
+          onClick={() => {
+            setStatusTab('resolved');
+            applyFilters({ status: 'resolved' });
+          }}
         >
           <div className="kpi-icon-box bg-emerald">
             <CheckCircle2 size={20} />
@@ -153,7 +171,10 @@ export default function CampusIssuesTracker({
         <div className="status-tabs-group">
           <button 
             className={`status-tab-btn ${statusTab === 'all' ? 'active' : ''}`}
-            onClick={() => setStatusTab('all')}
+            onClick={() => {
+              setStatusTab('all');
+              applyFilters({ status: 'all' });
+            }}
           >
             All Tickets ({issues.length})
           </button>
@@ -187,14 +208,37 @@ export default function CampusIssuesTracker({
               type="text"
               placeholder="Search ticket, room or equipment..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                const value = e.target.value;
+                setSearch(value);
+
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                applyFilters({ search: value });
+              }, 300);
+
+                useEffect(() => {
+                return () => {
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+               }
+              };
+              }, []);
+            }}
               className="search-input-sm"
             />
           </div>
 
           <select 
             value={selectedBuilding} 
-            onChange={e => setSelectedBuilding(e.target.value)}
+            onChange={e => {
+              const value = e.target.value;
+              setSelectedBuilding(value);
+              applyFilters({ building: value });
+            }}
             className="filter-select-sm"
           >
             <option value="all">All Blocks</option>
@@ -207,7 +251,11 @@ export default function CampusIssuesTracker({
 
           <select 
             value={selectedPriority} 
-            onChange={e => setSelectedPriority(e.target.value)}
+            onChange={e => {
+              const value = e.target.value;
+              setSelectedPriority(value);
+              applyFilters({ priority: value });
+            }}
             className="filter-select-sm"
           >
             <option value="all">All Priorities</option>

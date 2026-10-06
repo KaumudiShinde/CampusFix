@@ -1,4 +1,6 @@
 # pyrefly: ignore [missing-import]
+from re import search
+
 from rest_framework.views import APIView
 # pyrefly: ignore [missing-import]
 from rest_framework.response import Response
@@ -121,7 +123,9 @@ class RoomToggleStatusView(APIView):
 class InfrastructureIssueListView(APIView):
     def get(self, request):
         issues = InfrastructureIssue.objects.select_related('room', 'room__building').all().order_by('-created_at')
+
         
+        search = request.query_params.get('search')
         status_filter = request.query_params.get('status')
         building_code = request.query_params.get('building')
         priority = request.query_params.get('priority')
@@ -135,7 +139,16 @@ class InfrastructureIssueListView(APIView):
             issues = issues.filter(priority=priority)
         if category:
             issues = issues.filter(category=category)
-
+        if search:
+            issues = issues.filter(
+            Q(ticket_id__icontains=search) |
+            Q(title__icontains=search) |
+            Q(description__icontains=search) |
+            Q(reported_by_name__icontains=search) |
+            Q(room__room_number__icontains=search) |
+            Q(room__building__name__icontains=search) |
+            Q(room__building__code__icontains=search)
+            )
         serializer = InfrastructureIssueSerializer(issues, many=True)
         return Response(serializer.data)
 

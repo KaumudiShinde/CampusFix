@@ -32,7 +32,7 @@ function Dashboard() {
   const [rooms, setRooms] = useState([]);
   const [issues, setIssues] = useState([]);
   const [analytics, setAnalytics] = useState(null);
-
+  const [issueFilters, setIssueFilters] = useState({});
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [inspectedRoom, setInspectedRoom] = useState(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -57,35 +57,7 @@ function Dashboard() {
     }, 4000);
   };
 
-  // Silent background refresh
-  const silentRefresh = useCallback(async (currentBuildingId) => {
-    try {
-      const [
-        buildingsData,
-        roomsData,
-        issuesData,
-        analyticsData,
-      ] = await Promise.all([
-        api.getBuildings(),
-        api.getRooms(),
-        api.getIssues(),
-        api.getCampusAnalytics(),
-      ]);
 
-      setBuildings(buildingsData);
-      setRooms(roomsData);
-      setIssues(issuesData);
-      setAnalytics(analyticsData);
-      setLastUpdated(new Date());
-
-      if (currentBuildingId) {
-        const detailed = await api.getBuildingDetail(currentBuildingId);
-        setSelectedBuilding(detailed);
-      }
-    } catch (err) {
-      console.warn('Background refresh failed:', err);
-    }
-  }, []);
 
   // Fetch all campus data
   const loadData = useCallback(async () => {
@@ -137,17 +109,30 @@ function Dashboard() {
     loadData();
   }, []);
 
-  // Real-time polling every 5 seconds
+
+
+
+// Real-time polling
+// Refresh only issue/analytics data without repeatedly rebuilding the map.
   useEffect(() => {
-    pollingRef.current = setInterval(() => {
-      setSelectedBuilding((prev) => {
-        silentRefresh(prev?.id);
-        return prev;
-      });
-    }, 5000);
+    pollingRef.current = setInterval(async () => {
+      try {
+        const [issuesData, analyticsData] = await Promise.all([
+            api.getIssues(issueFilters),
+        api.getCampusAnalytics(),
+        ]);
+
+        setIssues(issuesData);
+        setAnalytics(analyticsData);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.warn('Background issue refresh failed:', err);
+      }
+    }, 30000); // refresh every 30 seconds
+
 
     return () => clearInterval(pollingRef.current);
-  }, [silentRefresh]);
+  }, [issueFilters]);
 
   // Building selection
   const handleSelectBuilding = async (building) => {
@@ -233,7 +218,22 @@ function Dashboard() {
     }
   };
 
-  // Resolve issue
+
+  // Search and filter infrastructure issues through Django API
+  const handleIssueSearch = async (filters = {}) => {
+    try {
+      setIssueFilters(filters);
+
+      const filteredIssues = await api.getIssues(filters);
+      setIssues(filteredIssues);
+    } catch (err) {
+      console.error('Failed to search/filter issues:', err);
+      showToast('Failed to filter complaints', 'error');
+    }
+  };
+
+  // Resolve Issue
+
   const handleResolveIssue = async (issueId) => {
     try {
       await api.updateIssueStatus(issueId, {
@@ -402,12 +402,9 @@ function Dashboard() {
           <CampusIssuesTracker
             issues={issues}
             buildings={buildings}
-            onOpenReportModal={() =>
-              handleOpenReportModal()
-            }
-            onResolveIssue={
-              handleResolveIssue
-            }
+            onOpenReportModal={() => handleOpenReportModal()}
+            onResolveIssue={handleResolveIssue}
+            onSearchIssues={handleIssueSearch}
           />
         )}
 
@@ -465,19 +462,16 @@ export default function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* Public Login */}
         <Route
           path="/login"
           element={<Login />}
         />
 
-        {/* Public Registration */}
         <Route
           path="/register"
           element={<Register />}
         />
 
-        {/* Protected CampusFix Dashboard */}
         <Route
           path="/"
           element={
@@ -487,7 +481,6 @@ export default function App() {
           }
         />
 
-        {/* Any unknown URL */}
         <Route
           path="*"
           element={
