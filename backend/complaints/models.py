@@ -22,7 +22,7 @@ class Building(models.Model):
     total_floors = models.PositiveIntegerField(default=5)
     description = models.TextField(blank=True, null=True)
     primary_departments = models.ManyToManyField(Department, blank=True, related_name='buildings')
-    
+
     # Real GPS Coordinates (MIT-WPU Kothrud Campus)
     latitude = models.FloatField(default=18.5186, help_text="GPS Latitude")
     longitude = models.FloatField(default=73.8153, help_text="GPS Longitude")
@@ -82,7 +82,7 @@ class Room(models.Model):
     floor_number = models.IntegerField(default=0, help_text="0 for Ground, 1 for 1st floor, etc.")
     room_type = models.CharField(max_length=30, choices=ROOM_TYPE_CHOICES, default='smart_classroom')
     capacity = models.PositiveIntegerField(default=60)
-    
+
     # Live Status
     current_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='vacant')
     current_activity = models.CharField(max_length=200, blank=True, null=True, help_text="e.g. CS-301 Operating Systems (Prof. Verma)")
@@ -91,7 +91,7 @@ class Room(models.Model):
     current_occupancy = models.PositiveIntegerField(default=0, help_text="Live count of students present")
     engagement_score = models.FloatField(default=0.0, help_text="Live engagement percentage 0-100")
     last_sensor_update = models.DateTimeField(null=True, blank=True, help_text="Last time real sensor data was received")
-    
+
     # Infrastructure Amenities & Equipment Details
     has_ac = models.BooleanField(default=True)
     has_projector = models.BooleanField(default=True)
@@ -167,11 +167,11 @@ class InfrastructureIssue(models.Model):
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default='other')
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
-    
+
     reported_by_name = models.CharField(max_length=100, default="Faculty / Student")
     reported_by_email = models.CharField(max_length=100, blank=True)
     assigned_technician = models.CharField(max_length=100, blank=True, null=True)
-    
+
     resolution_notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -202,3 +202,16 @@ class InfrastructureIssue(models.Model):
 
     def __str__(self):
         return f"[{self.ticket_id}] {self.room.room_number} - {self.title} ({self.status})"
+
+
+class ComplaintImage(models.Model):
+    issue = models.ForeignKey(
+        InfrastructureIssue,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
+    image = models.ImageField(upload_to="complaints/%Y/%m/")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.issue.ticket_id} - image {self.pk}"

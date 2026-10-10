@@ -64,13 +64,31 @@ export const api = {
   },
 
   async reportIssue(data) {
-    const res = await fetch(`${API_BASE}/infrastructure-issues/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (key !== "images" && value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
     });
-    if (!res.ok) throw new Error('Failed to submit issue report');
-    return await res.json();
+    if (Array.isArray(data.images)) {
+      data.images.forEach(file => {
+        formData.append("images", file);
+      });
+    }
+    const res = await fetch(
+      `${API_BASE}/infrastructure-issues/`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(
+        result.error || "Failed to submit issue report"
+      );
+    }
+    return result;
   },
 
   async updateIssueStatus(issueId, data) {

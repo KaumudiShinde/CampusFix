@@ -1,7 +1,24 @@
 # pyrefly: ignore [missing-import]
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Department, Building, Room, RoomSchedule, InfrastructureIssue
+from .models import Department, Building, Room, RoomSchedule, InfrastructureIssue, ComplaintImage
+
+
+class ComplaintImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ComplaintImage
+        fields = ["id", "image", "image_url", "uploaded_at"]
+        read_only_fields = ["image_url", "uploaded_at"]
+
+    def get_image_url(self, obj):
+        request = self.context.get("request")
+        if not obj.image:
+            return None
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -17,6 +34,7 @@ class InfrastructureIssueSerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    images = ComplaintImageSerializer(many=True, read_only=True)
 
     # New SLA field
     is_overdue = serializers.SerializerMethodField()
@@ -49,6 +67,7 @@ class InfrastructureIssueSerializer(serializers.ModelSerializer):
             # New SLA fields
             'sla_due_at',
             'is_overdue',
+            'images',
         ]
 
     def get_is_overdue(self, obj):

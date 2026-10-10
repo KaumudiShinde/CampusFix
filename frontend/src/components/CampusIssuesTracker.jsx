@@ -1,16 +1,17 @@
 import React, {useEffect, useRef, useState } from 'react';
-import { 
-  Wrench, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
-  Filter, 
-  Plus, 
-  Tv, 
-  Monitor, 
-  Wind, 
-  Wifi, 
-  Zap, 
+import ComplaintImageGallery from './ComplaintImageGallery';
+import {
+  Wrench,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Filter,
+  Plus,
+  Tv,
+  Monitor,
+  Wind,
+  Wifi,
+  Zap,
   Layers,
   Search,
   UserCheck,
@@ -31,10 +32,10 @@ const CATEGORY_ICONS = {
   other: AlertTriangle,
 };
 
-export default function CampusIssuesTracker({ 
-  issues, 
-  buildings, 
-  onOpenReportModal, 
+export default function CampusIssuesTracker({
+  issues,
+  buildings,
+  onOpenReportModal,
   onResolveIssue,
   onAssignTechnician,
   onSearchIssues
@@ -105,8 +106,8 @@ export default function CampusIssuesTracker({
             <span>Export CSV</span>
           </button>
 
-          <button 
-            onClick={() => onOpenReportModal()} 
+          <button
+            onClick={() => onOpenReportModal()}
             className="btn-primary"
           >
             <Plus size={16} />
@@ -117,8 +118,8 @@ export default function CampusIssuesTracker({
 
       {/* Summary KPI Cards */}
       <div className="tracker-kpi-grid">
-        <div 
-          className={`tracker-kpi-card ${statusTab === 'open' ? 'active' : ''}`} 
+        <div
+          className={`tracker-kpi-card ${statusTab === 'open' ? 'active' : ''}`}
           onClick={() => {
             setStatusTab('open');
             applyFilters({ status: 'open' });
@@ -133,8 +134,8 @@ export default function CampusIssuesTracker({
           </div>
         </div>
 
-        <div 
-          className={`tracker-kpi-card ${statusTab === 'in_progress' ? 'active' : ''}`} 
+        <div
+          className={`tracker-kpi-card ${statusTab === 'in_progress' ? 'active' : ''}`}
           onClick={() => {
             setStatusTab('in_progress');
             applyFilters({ status: 'in_progress' });
@@ -149,8 +150,8 @@ export default function CampusIssuesTracker({
           </div>
         </div>
 
-        <div 
-          className={`tracker-kpi-card ${statusTab === 'resolved' ? 'active' : ''}`} 
+        <div
+          className={`tracker-kpi-card ${statusTab === 'resolved' ? 'active' : ''}`}
           onClick={() => {
             setStatusTab('resolved');
             applyFilters({ status: 'resolved' });
@@ -169,7 +170,7 @@ export default function CampusIssuesTracker({
       {/* Filter & Search Bar */}
       <div className="tracker-controls-bar">
         <div className="status-tabs-group">
-          <button 
+          <button
             className={`status-tab-btn ${statusTab === 'all' ? 'active' : ''}`}
             onClick={() => {
               setStatusTab('all');
@@ -179,21 +180,21 @@ export default function CampusIssuesTracker({
             All Tickets ({issues.length})
           </button>
 
-          <button 
+          <button
             className={`status-tab-btn ${statusTab === 'open' ? 'active' : ''}`}
             onClick={() => setStatusTab('open')}
           >
             Open ({openCount})
           </button>
 
-          <button 
+          <button
             className={`status-tab-btn ${statusTab === 'in_progress' ? 'active' : ''}`}
             onClick={() => setStatusTab('in_progress')}
           >
             In Progress ({inProgressCount})
           </button>
 
-          <button 
+          <button
             className={`status-tab-btn ${statusTab === 'resolved' ? 'active' : ''}`}
             onClick={() => setStatusTab('resolved')}
           >
@@ -204,7 +205,7 @@ export default function CampusIssuesTracker({
         <div className="tracker-filters-right">
           <div className="search-wrap-sm">
             <Search size={14} className="search-icon" />
-            <input 
+            <input
               type="text"
               placeholder="Search ticket, room or equipment..."
               value={search}
@@ -232,8 +233,8 @@ export default function CampusIssuesTracker({
             />
           </div>
 
-          <select 
-            value={selectedBuilding} 
+          <select
+            value={selectedBuilding}
             onChange={e => {
               const value = e.target.value;
               setSelectedBuilding(value);
@@ -249,8 +250,8 @@ export default function CampusIssuesTracker({
             ))}
           </select>
 
-          <select 
-            value={selectedPriority} 
+          <select
+            value={selectedPriority}
             onChange={e => {
               const value = e.target.value;
               setSelectedPriority(value);
@@ -274,8 +275,8 @@ export default function CampusIssuesTracker({
             const CatIcon = CATEGORY_ICONS[issue.category] || Wrench;
 
             return (
-              <div 
-                key={issue.id} 
+              <div
+                key={issue.id}
                 className={`issue-row-card priority-${issue.priority}`}
               >
                 <div className="issue-row-icon">
@@ -307,6 +308,8 @@ export default function CampusIssuesTracker({
 
                   <p className="issue-row-desc">{issue.description}</p>
 
+                  <ComplaintImageGallery images={issue.images || []} />
+
                   <div className="issue-row-footer">
                     <div className="reporter-info">
                       <span>
@@ -334,7 +337,7 @@ export default function CampusIssuesTracker({
                 {/* Actions */}
                 <div className="issue-row-actions">
                   {issue.status !== 'resolved' ? (
-                    <button 
+                    <button
                       onClick={() => onResolveIssue(issue.id)}
                       className="btn-mark-resolved"
                     >

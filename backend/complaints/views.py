@@ -11,7 +11,7 @@ from django.db.models import Count, Q
 # pyrefly: ignore [missing-import]
 from django.utils import timezone
 # pyrefly: ignore [missing-import]
-from .models import Building, Room, RoomSchedule, InfrastructureIssue, Department
+from .models import Building, Room, RoomSchedule, InfrastructureIssue, Department, ComplaintImage
 # pyrefly: ignore [missing-import]
 from .serializers import (
     BuildingListSerializer, BuildingDetailSerializer,
@@ -124,7 +124,7 @@ class InfrastructureIssueListView(APIView):
     def get(self, request):
         issues = InfrastructureIssue.objects.select_related('room', 'room__building').all().order_by('-created_at')
 
-        
+
         search = request.query_params.get('search')
         status_filter = request.query_params.get('status')
         building_code = request.query_params.get('building')
@@ -153,15 +153,59 @@ class InfrastructureIssueListView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = InfrastructureIssueSerializer(data=request.data)
-        if serializer.is_valid():
-            issue = serializer.save()
-            # If critical priority, optionally update room status
-            if issue.priority == 'critical':
-                issue.room.current_status = 'maintenance'
-                issue.room.save()
-            return Response(InfrastructureIssueSerializer(issue).data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = InfrastructureIssueSerializer(
+            data=request.data
+        )
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        issue = serializer.save()
+        # Keep the existing critical-priority behavior.
+        if issue.priority == "critical":
+            issue.room.current_status = "maintenance"
+            issue.room.save()
+
+        uploaded_images = request.FILES.getlist("images")
+        MAX_IMAGES = 5
+        MAX_SIZE = 5 * 1024 * 1024
+        allowed_types = {
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        }
+        if len(uploaded_images) > MAX_IMAGES:
+            issue.delete()
+            return Response(
+                {"error": "Maximum 5 images allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        for image_file in uploaded_images:
+            if image_file.content_type not in allowed_types:
+                issue.delete()
+                return Response(
+                    {"error": "Only JPG, PNG and WebP images are allowed."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if image_file.size > MAX_SIZE:
+                issue.delete()
+                return Response(
+                    {"error": "Each image must be 5 MB or smaller."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            ComplaintImage.objects.create(
+                issue=issue,
+                image=image_file,
+            )
+        output = InfrastructureIssueSerializer(
+            issue,
+            context={"request": request},
+        )
+        return Response(
+            output.data,
+            status=status.HTTP_201_CREATED,
+        )
 
 class InfrastructureIssueDetailView(APIView):
     def patch(self, request, pk):
@@ -175,12 +219,12 @@ class InfrastructureIssueDetailView(APIView):
             issue.status = new_status
             if new_status == 'resolved':
                 issue.resolved_at = timezone.now()
-        
+
         if 'assigned_technician' in request.data:
             issue.assigned_technician = request.data.get('assigned_technician')
         if 'resolution_notes' in request.data:
             issue.resolution_notes = request.data.get('resolution_notes')
-            
+
         issue.save()
         return Response(InfrastructureIssueSerializer(issue).data)
 
@@ -281,21 +325,21 @@ class RoomDataIngestionView(APIView):
             room = Room.objects.get(pk=pk)
         except Room.DoesNotExist:
             return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
         occupancy = request.data.get('occupancy')
         engagement = request.data.get('engagement')
-        
+
         if occupancy is not None:
             room.current_occupancy = int(occupancy)
         if engagement is not None:
             room.engagement_score = float(engagement)
-            
+
         room.last_sensor_update = timezone.now()
         room.save()
-        
+
         return Response({
-            "status": "success", 
-            "room_id": room.id, 
-            "occupancy": room.current_occupancy, 
+            "status": "success",
+            "room_id": room.id,
+            "occupancy": room.current_occupancy,
             "engagement": room.engagement_score
         })

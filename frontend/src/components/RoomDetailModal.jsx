@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Tv, 
-  Monitor, 
-  Wind, 
-  Wifi, 
-  Users, 
-  Cpu, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock, 
-  Calendar, 
-  Layers, 
-  Sparkles, 
-  ShieldCheck, 
+import ComplaintImageGallery from './ComplaintImageGallery';
+import {
+  X,
+  Tv,
+  Monitor,
+  Wind,
+  Wifi,
+  Users,
+  Cpu,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  Calendar,
+  Layers,
+  Sparkles,
+  ShieldCheck,
   Wrench,
   Activity,
   Plus
 } from 'lucide-react';
 
-export default function RoomDetailModal({ 
-  room, 
-  onClose, 
-  onToggleStatus, 
+export default function RoomDetailModal({
+  room,
+  onClose,
+  onToggleStatus,
   onOpenReportIssue,
   onResolveIssue
 }) {
@@ -72,20 +73,20 @@ export default function RoomDetailModal({
 
         {/* Modal Navigation Tabs */}
         <div className="modal-tabs">
-          <button 
+          <button
             className={`modal-tab ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
             Overview & Status
           </button>
-          <button 
+          <button
             className={`modal-tab ${activeTab === 'schedule' ? 'active' : ''}`}
             onClick={() => setActiveTab('schedule')}
           >
             <Calendar size={14} className="inline mr-1" />
             Timetable ({room.schedules?.length || 0})
           </button>
-          <button 
+          <button
             className={`modal-tab ${activeTab === 'issues' ? 'active' : ''}`}
             onClick={() => setActiveTab('issues')}
           >
@@ -102,7 +103,7 @@ export default function RoomDetailModal({
               <div className="status-control-box">
                 <span className="control-label">Live Space Status:</span>
                 <div className="status-toggle-buttons">
-                  <button 
+                  <button
                     className={`status-choice-btn ${room.current_status === 'vacant' ? 'active green' : ''}`}
                     onClick={() => handleStatusChange('vacant')}
                     disabled={isUpdating}
@@ -111,7 +112,7 @@ export default function RoomDetailModal({
                     <span>Set Vacant / Free</span>
                   </button>
 
-                  <button 
+                  <button
                     className={`status-choice-btn ${room.current_status === 'occupied' ? 'active blue' : ''}`}
                     onClick={() => handleStatusChange('occupied')}
                     disabled={isUpdating}
@@ -120,7 +121,7 @@ export default function RoomDetailModal({
                     <span>Set In Session</span>
                   </button>
 
-                  <button 
+                  <button
                     className={`status-choice-btn ${room.current_status === 'reserved' ? 'active amber' : ''}`}
                     onClick={() => handleStatusChange('reserved')}
                     disabled={isUpdating}
@@ -129,7 +130,7 @@ export default function RoomDetailModal({
                     <span>Set Reserved</span>
                   </button>
 
-                  <button 
+                  <button
                     className={`status-choice-btn ${room.current_status === 'maintenance' ? 'active red' : ''}`}
                     onClick={() => handleStatusChange('maintenance')}
                     disabled={isUpdating}
@@ -143,8 +144,8 @@ export default function RoomDetailModal({
                   <div className="custom-activity-inputs">
                     <div className="input-group">
                       <label>Active Subject / Activity:</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="e.g. CS-301 Cloud Computing Lab"
                         value={customActivity}
                         onChange={e => setCustomActivity(e.target.value)}
@@ -154,8 +155,8 @@ export default function RoomDetailModal({
                     <div className="input-row">
                       <div className="input-group">
                         <label>Faculty / In-Charge:</label>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           placeholder="e.g. Prof. Verma"
                           value={customInstructor}
                           onChange={e => setCustomInstructor(e.target.value)}
@@ -164,8 +165,8 @@ export default function RoomDetailModal({
                       </div>
                       <div className="input-group">
                         <label>Expected Free At:</label>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           placeholder="e.g. Available at 02:00 PM"
                           value={customNextTime}
                           onChange={e => setCustomNextTime(e.target.value)}
@@ -173,7 +174,7 @@ export default function RoomDetailModal({
                         />
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleStatusChange(room.current_status)}
                       className="btn-update-details"
                       disabled={isUpdating}
@@ -287,7 +288,7 @@ export default function RoomDetailModal({
             <div className="issues-section">
               <div className="issues-header-bar">
                 <h4 className="section-subtitle">Logged Infrastructure Issues</h4>
-                <button 
+                <button
                   className="btn-add-issue-inline"
                   onClick={() => onOpenReportIssue(room)}
                 >
@@ -316,6 +317,8 @@ export default function RoomDetailModal({
                       <h5 className="issue-title-text">{issue.title}</h5>
                       <p className="issue-desc-text">{issue.description}</p>
 
+                      <ComplaintImageGallery images={issue.images || []} />
+
                       {issue.assigned_technician && (
                         <div className="issue-assigned-tag">
                           <span>Technician: <strong>{issue.assigned_technician}</strong></span>
@@ -324,7 +327,7 @@ export default function RoomDetailModal({
 
                       {issue.status !== 'resolved' && (
                         <div className="issue-actions-row">
-                          <button 
+                          <button
                             className="btn-resolve-issue-sm"
                             onClick={() => onResolveIssue(issue.id)}
                           >

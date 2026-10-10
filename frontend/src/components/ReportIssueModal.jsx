@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  Wrench, 
-  Tv, 
-  Monitor, 
-  Wind, 
-  Wifi, 
-  Zap, 
-  Layers, 
+import MultiImageUploader from './MultiImageUploader';
+import {
+  X,
+  Wrench,
+  Tv,
+  Monitor,
+  Wind,
+  Wifi,
+  Zap,
+  Layers,
   AlertTriangle,
   Building2,
   CheckCircle2
@@ -24,12 +25,12 @@ const CATEGORIES = [
   { id: 'other', label: 'Other Facility Issue', icon: AlertTriangle },
 ];
 
-export default function ReportIssueModal({ 
-  rooms, 
-  buildings, 
-  presetRoom, 
-  onClose, 
-  onSubmitIssue 
+export default function ReportIssueModal({
+  rooms,
+  buildings,
+  presetRoom,
+  onClose,
+  onSubmitIssue
 }) {
   const [selectedRoomId, setSelectedRoomId] = useState(presetRoom?.id || (rooms[0]?.id || ''));
   const [category, setCategory] = useState('projector_av');
@@ -37,6 +38,7 @@ export default function ReportIssueModal({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [reporterName, setReporterName] = useState('MIT-WPU Faculty / Student');
+  const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -55,7 +57,9 @@ export default function ReportIssueModal({
         title,
         description,
         reported_by_name: reporterName,
+        images,
       });
+      setImages([]);
       onClose();
     } catch (err) {
       alert('Failed to log issue: ' + err.message);
@@ -84,8 +88,8 @@ export default function ReportIssueModal({
           {/* Target Room */}
           <div className="form-group">
             <label className="form-label">Select Room / Lab *</label>
-            <select 
-              value={selectedRoomId} 
+            <select
+              value={selectedRoomId}
               onChange={e => setSelectedRoomId(e.target.value)}
               className="modal-select"
               required
@@ -146,8 +150,8 @@ export default function ReportIssueModal({
           {/* Issue Title */}
           <div className="form-group">
             <label className="form-label">Issue Headline / Title *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="e.g. HDMI Cable missing / Projector lamp error"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -159,7 +163,7 @@ export default function ReportIssueModal({
           {/* Description */}
           <div className="form-group">
             <label className="form-label">Detailed Description *</label>
-            <textarea 
+            <textarea
               rows={3}
               placeholder="Provide exact details for technicians (e.g. which row, error codes, specific symptoms)..."
               value={description}
@@ -169,11 +173,16 @@ export default function ReportIssueModal({
             />
           </div>
 
+          <MultiImageUploader
+            value={images}
+            onChange={setImages}
+          />
+
           {/* Reporter Name */}
           <div className="form-group">
             <label className="form-label">Reported By</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={reporterName}
               onChange={e => setReporterName(e.target.value)}
               className="modal-text-input"

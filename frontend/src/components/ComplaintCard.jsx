@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StatusBadge } from './StatusBadge';
 import { TicketTracker } from './TicketTracker';
+import ComplaintImageGallery from './ComplaintImageGallery';
 
 export function ComplaintCard({ complaint, onUpvote, onUpdateStatus, userRole }) {
   const [showTracker, setShowTracker] = useState(false);
@@ -33,6 +34,8 @@ export function ComplaintCard({ complaint, onUpvote, onUpdateStatus, userRole })
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', flex: 1, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {complaint.description}
         </p>
+
+        <ComplaintImageGallery images={complaint.images || []} />
 
         <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           <span>📍 {complaint.location_building} - {complaint.room_number}</span>

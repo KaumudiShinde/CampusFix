@@ -9,6 +9,7 @@ venv/
 ENV/
 db.sqlite3
 media/
+backend/media/
 
 # Node / React
 node_modules/
