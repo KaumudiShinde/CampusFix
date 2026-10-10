@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# pyrefly: ignore [missing-import]
 import requests
 import random
 import time
